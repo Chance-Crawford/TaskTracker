@@ -14,7 +14,42 @@
     <header>
         <h1 class="page-title">TaskTracker</h1>
         <p>Click the button below to add a new task!</p>
-        <button class="btn" id="save-task">Add Task</button>
+
+        <form id="task-form">
+            <div class="form-group">
+
+                <input type="text" name="task-name" placeholder="Enter Task Name">
+
+                <!-- dropdown menu list -->
+                <!-- "name" to identify the form input, used to select 
+                element with javascript using querySelector() -->
+                <select name="task-type" class="select-dropdown">
+
+                    <!-- choices for the dropdown -->
+                    <!-- disabled place holder -->
+                    <!-- For the option that merely describes the list,
+                        need to ensure it appears first and also prevent the 
+                         user from selecting it. To do that, added the 
+                         selected property, which makes it appear first, and 
+                         the disabled property, which prevents it from being 
+                         chosen by the user. 
+                     -->
+                    <option value="" disabled selected>Task type</option>
+                    <!-- "value" this value will be used in the JavaScript 
+                        later to read the option we've picked.
+                    -->
+                    <option value="Print">Print</option>
+                    <option value="Web">Web</option>
+                    <option value="Mobile">Mobile</option>
+                    <option value="Other">Other</option>
+
+                </select>
+
+                <button class="btn" id="save-task">Add Task</button>
+
+            </div>
+        </form>
+        
     </header>
 
     <!-- main content (middle) -->
@@ -23,7 +58,8 @@
 
             <h2>Tasks To Do</h2>
             <ul class="task-list" id="tasks-to-do">
-                <li class="task-item">A task will be here soon!</li>
+                <!-- <li class="task-item"></li> format of all li elements 
+                added using javascript -->
             </ul>
 
         </section> 
@@ -31,7 +67,7 @@
 
     <!-- footer -->
     <footer>
-        &copy;2020 by Taskinator
+        &copy;2020 by TaskTracker
     </footer>
 
 
