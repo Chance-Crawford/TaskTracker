@@ -7,7 +7,9 @@ var formEl = document.querySelector("#task-form");
 // selects the ul element by its ID
 var tasksToDoEl = document.querySelector("#tasks-to-do");
 
-function createTaskHandler(event) {
+
+// gets the values entered by the user and stores them in a new obj
+function TaskFormHandler(event) {
 
     // see google docs web api - notes, the event object
     // prevents default browser behavior, in this case
@@ -34,6 +36,42 @@ function createTaskHandler(event) {
     // value is the current picked option
     var taskTypeInput = document.querySelector("select[name='task-type']").value;
 
+    // check if input values are empty strings
+    // empty strings are considered a falsy value
+    // if they are empty, alert and then terminate the function
+    if (!taskNameInput && !taskTypeInput) {
+        alert("You need to fill out the task form!");
+        return false;
+    }
+    
+    if (!taskNameInput) {
+        alert("Please enter a task name!");
+        return false;
+    }
+
+    if (!taskTypeInput) {
+        alert("Please select a task type!");
+        return false;
+    }
+
+    // resets the form element so that you dont have to delete
+    // all the text manually after you submitted a task
+    formEl.reset();
+
+    // package up data as an object
+    var taskDataObj = {
+        name: taskNameInput,
+        type: taskTypeInput
+    };
+
+    // send the new object as an argument to createTaskEl()
+    createTaskEl(taskDataObj);
+    
+}
+
+// holds the code that creates a new task HTML element
+// and then adds the element to the list
+function createTaskEl(taskDataObj) {
     // when this variable is used, a new <li> element is created
     var listItemEl = document.createElement("li");
     // programmatically assigns a class and all the styles 
@@ -48,9 +86,9 @@ function createTaskHandler(event) {
     // HTML content being added inside of the div.
     // works a lot like the textContent property, but actually
     // allows you to add full HTML inside the object, not just text.
-    // taskNameInput is the variable holding the current value
-    // of the input box, which is the text typed into it
-    taskInfoEl.innerHTML = "<h3 class='task-name'>" + taskNameInput + "</h3><span class='task-type'>" + taskTypeInput + "</span>";
+    // taskDataObj.name is a property holding the current value
+    // of the input box, which is the text the user typed into it
+    taskInfoEl.innerHTML = "<h3 class='task-name'>" + taskDataObj.name + "</h3><span class='task-type'>" + taskDataObj.type + "</span>";
     
     // make the new div element, a child of the new li element.
     // put the div inside the li element
@@ -58,6 +96,7 @@ function createTaskHandler(event) {
     // appends the li element (listItemEl) to be the last child 
     // of the ul element
     tasksToDoEl.appendChild(listItemEl);
+
 }
 
 /* event listener can have a lot of events it listens for, 
@@ -70,4 +109,4 @@ that has a value of "submit", like the button we currently
 have in the form
 When a user presses Enter on their keyboard
 */
-formEl.addEventListener("submit", createTaskHandler);
+formEl.addEventListener("submit", TaskFormHandler);
