@@ -9,6 +9,18 @@ var tasksToDoEl = document.querySelector("#tasks-to-do");
 var tasksInProgressEl = document.querySelector("#tasks-in-progress");
 var tasksCompletedEl = document.querySelector("#tasks-completed");
 
+// This array will hold all of the list items as objects
+// so that they can be saved to localStorage.
+// They are saved so that when the user refreshes the page,
+// all of the tasks dont disappear.
+// we can't use a querySelector() method to save the entire task item 
+// element to localStorage because localStorage 
+// can only save data as a string.
+// so the solution would be to turn each li element into an object
+// and capture all of its values like id, name, type, and status together
+// as strings properties in the object, we do this in TaskFormHandler().
+var tasks = [];
+
 // variable which will increment everytimee a new task is created
 // to give the task a unique ID.
 // the ID will be used to edit, delete and change the status of tasks.
@@ -92,8 +104,14 @@ function TaskFormHandler(event) {
     else {
         // package up data as an object
         var taskDataObj = {
+            // this is needed for createTaskEl()
             name: taskNameInput,
-            type: taskTypeInput
+            type: taskTypeInput,
+            // this and the ones above are needed for reference in the 
+            // object to store it in localStorage. ID is also needed for this,
+            // and that property is set in the object in the createTaskEl()
+            // function.
+            status: "to do"
         };
         // send the new object as an argument to createTaskEl()
         createTaskEl(taskDataObj);
@@ -103,7 +121,7 @@ function TaskFormHandler(event) {
 
 // We'll use taskId to find the correct <li> element and use 
 // taskName and taskType to update the <li> element's 
-// children accordingly.
+// children accordingly. (h3 and span)
 function completeEditTask(taskName, taskType, taskId) {
     // find the matching li element based on unique 
     // data-task-id
@@ -113,6 +131,26 @@ function completeEditTask(taskName, taskType, taskId) {
     // of the specific list item's HTML
     taskSelected.querySelector("h3.task-name").textContent = taskName;
     taskSelected.querySelector("span.task-type").textContent = taskType;
+
+    // loop through tasks array and finds the task object
+    // that is associated with the li element that is being updated.
+    // it finds the corresponding object by searching the array for 
+    // the object with the matching ID to the li element that is currently
+    // being edited or changed.
+    // It then updates the task object in the array to match the updated
+    // li element.
+    for (var i = 0; i < tasks.length; i++) {
+        if (tasks[i].id === parseInt(taskId)) {
+            // after it finds the matching object in the array,
+            // updates the object's name and type to the new values.
+            tasks[i].name = taskName;
+            tasks[i].type = taskType;
+        }
+    };
+
+    // saves updated tasks array (with updated task object within it) to
+    // localStorage
+    saveTasks();
 
     // reset the form by removing the task id and changing the 
     // button text back to normal default
@@ -152,6 +190,23 @@ function createTaskEl(taskDataObj) {
     // put the div inside the li element
     listItemEl.appendChild(taskInfoEl);
 
+    // creates the id property in the li object, and assigns it the
+    // value of the object's unique data-task-id.
+    // This way, the id of the newly created DOM element gets added to 
+    // the task's object as well.
+    taskDataObj.id = taskIdCounter;
+    // not that the id property was added to the object, this object
+    // has all the information and properties it needs and
+    // is ready to be stored in localStorage, so push the task object to the 
+    // tasks array.
+    // push adds any content between the parentheses to the end of 
+    // the specified array.
+    // So we've added the ability to save a task not only to the page 
+    // but in the array as well. Because we also update and remove tasks 
+    // as well as add them, we'll have to update the completeEditTask(), 
+    // taskStatusChangeHandler(), and deleteTask() functions too.
+    tasks.push(taskDataObj);
+
     // we're using taskIdCounter as the argument now to create 
     // buttons and a dropdown that correspond to the current task id.
     // createTaskActions() returns a <div> DOM element, 
@@ -163,8 +218,30 @@ function createTaskEl(taskDataObj) {
     listItemEl.appendChild(taskActionsEl);
 
     // appends the new li element (listItemEl) to be the last child 
-    // of the ul element
-    tasksToDoEl.appendChild(listItemEl);
+    // of the ul element which matches the status of the object.
+
+    // place the new DOM element in its designated list based on the 
+    // task objects status.
+    // if object does not have a status, then it is new, so place it in
+    // the "tasks to do" list as the default.
+    if(taskDataObj.status === "in progress") {
+        tasksInProgressEl.appendChild(listItemEl);
+        // changes the index of the dropdown menu after it places the
+        // DOM element it the list.
+        listItemEl.querySelector("select[name='status-change']").selectedIndex = 1;
+    }
+    else if(taskDataObj.status === "completed") {
+        tasksCompletedEl.appendChild(listItemEl);
+        listItemEl.querySelector("select[name='status-change']").selectedIndex = 2;
+    }
+    else {
+        tasksToDoEl.appendChild(listItemEl);
+        listItemEl.querySelector("select[name='status-change']").selectedIndex = 0;
+    }
+
+    // saves updated tasks array (with new task object within it) to
+    // localStorage
+    saveTasks();
 
     // increase task counter by 1 for next unique id whenever
     // a new li element is created
@@ -251,6 +328,30 @@ function deleteTask(taskId) {
     var taskSelected = document.querySelector(".task-item[data-task-id='" + taskId + "']");
     // remove the specific li element from the page
     taskSelected.remove();
+
+    // create new array to hold updated list of tasks
+    var updatedTaskArr = [];
+
+    // loop through current task objects
+    for (var i = 0; i < tasks.length; i++) {
+        // if tasks[i].id doesn't match the value of taskId, 
+        // let's keep that task and push it into the new array.
+        if (tasks[i].id !== parseInt(taskId)) {
+            updatedTaskArr.push(tasks[i]);
+        }
+    }
+
+    // reassign tasks array to be the same as updatedTaskArr.
+    // updatedTaskArr has all of the task objects except
+    // for the task object that was just deleted.
+    // we essentially have to create a new array of tasks that 
+    // is identical to our current one, except it won't receive the 
+    // task we're deleting.
+    tasks = updatedTaskArr;
+
+    // saves updated tasks array (without task object within it) to
+    // localStorage
+    saveTasks();
 }
 
 // this function is used in the taskButtonHandler function.
@@ -359,6 +460,97 @@ function taskStatusChangeHandler(event) {
     else if (statusValue === "completed") {
         tasksCompletedEl.appendChild(taskSelected);
     }
+
+    // update corresponding task object's status in "tasks" array too,
+    // find the corresponding object in the array based on the id of the
+    // li element. Then update the object representation of the element
+    // to have the same new status value.
+    for (var i = 0; i < tasks.length; i++) {
+        if (tasks[i].id === parseInt(taskId)) {
+            tasks[i].status = statusValue;
+        }
+    }
+
+    // saves updated tasks array (with updated task object within it) to
+    // localStorage
+    saveTasks();
+
+}
+
+// function for saving tasks to localStorage. tasks is an array of 
+// task objects.
+// this function will execute whenever the data changes, so
+// every time we add, update, or delete any tasks.
+// So we are going to run this save function at the end of all these 
+// functions: createTaskEl(), completeEditTask(), taskStatusChangeHandler(),
+// deleteTask().
+// this means we are running the save funtion, whenever any change to a task occurs
+// or whenever a task is created.
+// We add this to localStorage so that the users tasks are still there
+// after they refresh the page
+function saveTasks() {
+    // localStorage is a web storage api. This is setting the array
+    // of task objects (tasks on the right) as a value in
+    // localStorage. you can retrieve (get) this array value by using
+    // the assigned key on the left "tasks".
+    // more info on localStorage can be found in google docs javascript notes,
+    // localStorage.
+
+    // Unfortunately, localStorage can only store one type of data: strings. 
+    // If we store a number in localStorage, it will turn into a string. 
+    // If we store the Boolean true, it will end up as "true" instead. 
+    // Because objects and arrays aren't simple data values and can comprise 
+    // multiple data types, a computer can't easily convert them to strings 
+    // in the same way it can do so with numbers and Booleans. However, 
+    // a couple of built-in JavaScript tools allow us to perform this 
+    // conversion ourselves. We will use JSON to convert this array of objects to
+    // a string.
+    // JSON stands for JavaScript Object Notation.
+    // As the method name stringify() implies, we just converted 
+    // the tasks array into a string for saving in localStorage.
+    // We convert this string back to an array of objects in the
+    // loadTasks() function.
+    localStorage.setItem("tasks", JSON.stringify(tasks));
+}
+
+
+// load the tasks back from localStorage.
+// whenever the page refreshes, so does the script and all the values reset.
+// but localStorage still saves all the things you instructed it to save.
+// We saved the tasks array of task objects in saveTasks() above
+function loadTasks() {
+    // loads the string which we stored in localStorage 
+    // within the saveTasks() function above.
+    // this string is the stringified version of the task array
+    // which was saved in localStorage.
+    // we assign this string to the new savedTasks variable.
+    var savedTasks = localStorage.getItem("tasks");
+
+    // If nothing returns from localStorage, then 
+    // savedTasks will have a value of null. null is a falsy value.
+    // Check if savedTasks is equal to null by using an if statement.
+    // If it is, then return false. We don't want this 
+    // function to keep running with no tasks to load onto the page.
+    // If a stringified array is returned, this if statement will be ignored.
+    if(!savedTasks) {
+        return false;
+    }
+
+    // Any data in localStorage for savedTasks to retrieve is still in 
+    // a string format, and we have to get it back into an array of objects.
+    // parse converts the stringified JSON back into a real array of objects.
+    savedTasks = JSON.parse(savedTasks);
+
+    // loop through savedTasks array
+    for (var i = 0; i < savedTasks.length; i++) {
+        // pass each task object into the `createTaskEl()` function
+        // to create the DOM element from the object.
+        createTaskEl(savedTasks[i]);
+
+    }
+
+
+
 }
 
 
@@ -388,3 +580,5 @@ pageContentEl.addEventListener("click", taskButtonHandler);
 // this event listener will only fire when a select form is changed
 // within the lists.
 pageContentEl.addEventListener("change", taskStatusChangeHandler);
+
+loadTasks();
